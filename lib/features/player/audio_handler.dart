@@ -29,6 +29,8 @@ class MyAudioHandler extends BaseAudioHandler {
   final _playlist = ConcatenatingAudioSource(children: []);
   bool _isUpdatingQueue = false;
   int? _lastProcessedAutoAdvanceIndex = null;
+  bool _hasInternet = true; // Cache internet status to avoid constant checks
+  StreamSubscription<bool>? _connectivitySubscription;
 
   MyAudioHandler() {
     _loadEmptyPlaylist();
@@ -39,6 +41,7 @@ class MyAudioHandler extends BaseAudioHandler {
     _listenForSequenceStateChanges();
     _listenForErrors();
     _listenForAutoAdvance();
+    _listenForConnectivityChanges();
   }
 
   void _listenForErrors() {
@@ -50,12 +53,37 @@ class MyAudioHandler extends BaseAudioHandler {
     );
   }
 
+  /// Listen for connectivity changes and cache the status
+  void _listenForConnectivityChanges() {
+    _connectivitySubscription = _networkInfo.onConnectivityChanged.listen((hasInternet) {
+      _hasInternet = hasInternet;
+      debugPrint('Connectivity changed: $_hasInternet');
+    });
+  }
+
+  /// Check internet connectivity with a timeout to prevent lag on slow connections
+  /// Returns false if timeout occurs (assumes offline to allow cached playback)
+  Future<bool> _checkInternetWithTimeout({Duration timeout = const Duration(seconds: 3)}) async {
+    try {
+      return await _networkInfo.isConnected.timeout(
+        timeout,
+        onTimeout: () {
+          debugPrint('Internet connectivity check timed out - assuming offline');
+          return false;
+        },
+      );
+    } catch (e) {
+      debugPrint('Error checking internet: $e');
+      return false;
+    }
+  }
+
   void _listenForAutoAdvance() {
     _player.playbackEventStream.listen((event) async {
       if (_isUpdatingQueue) return;
 
-      final hasInternet = await _networkInfo.isConnected;
-      if (hasInternet) return; // only check when offline
+      // Use cached internet status to avoid constant checks
+      if (_hasInternet) return; // only check when offline
 
       final currentIndex = _player.currentIndex;
       if (currentIndex == null) return;
@@ -204,11 +232,11 @@ class MyAudioHandler extends BaseAudioHandler {
       if (_player.shuffleModeEnabled) {
         index = _player.shuffleIndices!.indexOf(index);
       }
-      final hasInternet = await _networkInfo.isConnected;
       final currentSong = playlist[index];
       final isDownloaded = currentSong.extras?['isDownloaded'] == 'true';
 
-      if (!hasInternet && !isDownloaded) {
+      // Only check cached internet status for non-downloaded songs to avoid lag
+      if (!isDownloaded && !_hasInternet) {
         // Don't update mediaItem, let auto-advance handle it
         debugPrint('Song index changed to non-downloaded song while offline, skipping update');
         return;
@@ -347,10 +375,9 @@ class MyAudioHandler extends BaseAudioHandler {
 
       // if we just removed the current track, find the next one to play
       if (isCurrentlyPlaying && wasPlaying) {
-        final hasInternet = await _networkInfo.isConnected;
         int nextPlayableIndex = -1;
 
-        if (!hasInternet) {
+        if (!_hasInternet) {
           // look forward first
           for (int i = index; i < newQueue.length; i++) {
             final isDownloaded = newQueue[i].extras?['isDownloaded'] == 'true';
@@ -396,12 +423,14 @@ class MyAudioHandler extends BaseAudioHandler {
     if (currentIndex != null && currentIndex >= 0 && currentIndex < queue.value.length) {
       final currentSong = queue.value[currentIndex];
       final isDownloaded = currentSong.extras?['isDownloaded'] == 'true';
-      final hasInternet = await _networkInfo.isConnected;
 
-      // don't try to play if we're offline and song isn't downloaded
-      if (!hasInternet && !isDownloaded) {
-        debugPrint('Cannot play - offline and track not downloaded');
-        return;
+      // Only check internet for non-downloaded songs to avoid lag with slow internet
+      if (!isDownloaded) {
+        final hasInternet = await _checkInternetWithTimeout();
+        if (!hasInternet) {
+          debugPrint('Cannot play - offline and track not downloaded');
+          return;
+        }
       }
     }
 
@@ -426,11 +455,14 @@ class MyAudioHandler extends BaseAudioHandler {
 
     final targetSong = queue.value[index];
     final isDownloaded = targetSong.extras?['isDownloaded'] == 'true';
-    final hasInternet = await _networkInfo.isConnected;
 
-    if (!hasInternet && !isDownloaded) {
-      debugPrint('Cannot skip - offline and track not downloaded');
-      return;
+    // Only check internet for non-downloaded songs to avoid lag with slow internet
+    if (!isDownloaded) {
+      final hasInternet = await _checkInternetWithTimeout();
+      if (!hasInternet) {
+        debugPrint('Cannot skip - offline and track not downloaded');
+        return;
+      }
     }
 
     if (_player.shuffleModeEnabled) {
@@ -443,12 +475,11 @@ class MyAudioHandler extends BaseAudioHandler {
   @override
   Future<void> skipToNext() async {
     final currentIndex = _player.currentIndex ?? 0;
-    final hasInternet = await _networkInfo.isConnected;
     final queueList = queue.value;
 
     if (queueList.isEmpty) return;
 
-    if (!hasInternet) {
+    if (!_hasInternet) {
       int nextPlayableIndex = -1;
 
       // search forward
@@ -484,12 +515,11 @@ class MyAudioHandler extends BaseAudioHandler {
   @override
   Future<void> skipToPrevious() async {
     final currentIndex = _player.currentIndex ?? 0;
-    final hasInternet = await _networkInfo.isConnected;
     final queueList = queue.value;
 
     if (queueList.isEmpty) return;
 
-    if (!hasInternet) {
+    if (!_hasInternet) {
       int prevPlayableIndex = -1;
 
       // search backward
@@ -667,5 +697,10 @@ class MyAudioHandler extends BaseAudioHandler {
   Future<void> onTaskRemoved() async {
     await _player.stop();
     return super.onTaskRemoved();
+  }
+
+  void dispose() {
+    _connectivitySubscription?.cancel();
+    _player.dispose();
   }
 }
