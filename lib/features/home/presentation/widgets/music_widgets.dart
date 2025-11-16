@@ -76,15 +76,13 @@ class MusicGridCard extends StatelessWidget {
         }
 
         // Navigate to full screen player
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => FullScreenPlayer(song: song),
-          ),
-        );
-
         if (context.mounted) {
-          BlocProvider.of<MusicHomeBloc>(context).add(getMusicsEvent());
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => FullScreenPlayer(song: song),
+            ),
+          );
         }
       },
       child: Container(
