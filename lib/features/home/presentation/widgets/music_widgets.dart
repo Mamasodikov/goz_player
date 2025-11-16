@@ -3,9 +3,12 @@ import 'dart:io';
 import 'package:goz_player/core/dependency_injection.dart';
 import 'package:goz_player/core/network/network_info.dart';
 import 'package:goz_player/core/utils/constants.dart';
+import 'package:goz_player/core/utils/functions.dart';
 import 'package:goz_player/core/widgets/custom_toast.dart';
+import 'package:goz_player/features/home/data/datasources/music_local_datasource.dart';
 import 'package:goz_player/features/home/data/models/music_model.dart';
 import 'package:goz_player/features/home/presentation/bloc/music_home/music_home_bloc.dart';
+import 'package:goz_player/features/player/page_manager.dart';
 import 'package:goz_player/features/player/pages/full_screen_player.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -21,6 +24,8 @@ class MusicGridCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final networkInfo = di<NetworkInfo>();
+    final pageManager = di<PageManager>();
+    final database = di<MusicLocalDatasource>();
 
     return ZoomTapAnimation(
       onTap: () async {
@@ -31,6 +36,46 @@ class MusicGridCard extends StatelessWidget {
           return;
         }
 
+        // Start playing the song before navigation for instant playback
+        final playlist = pageManager.playlistNotifier.value;
+        final currentSong = pageManager.currentSongNotifier.value;
+
+        // Only change song if it's not already the current song
+        if (currentSong.id != song.trackId) {
+          final songIndex = playlist.indexWhere((item) => item.id == song.trackId);
+
+          if (songIndex != -1) {
+            // Song is already in playlist, just skip to it
+            pageManager.skipToQueueItem(songIndex);
+            pageManager.play();
+          } else {
+            // Song not in playlist, add it first
+            final dbMusic = await database.getMusicById(song.trackId);
+
+            if (dbMusic != null) {
+              await pageManager.add(dbMusic.toMap());
+            } else {
+              await addToDBAndPlaylist(
+                database: database,
+                pageManager: pageManager,
+                updatedMusic: song,
+              );
+            }
+
+            // Wait a bit for the song to be added to the playlist
+            await Future.delayed(Duration(milliseconds: 50));
+
+            final newPlaylist = pageManager.playlistNotifier.value;
+            final newIndex = newPlaylist.indexWhere((item) => item.id == song.trackId);
+
+            if (newIndex != -1) {
+              pageManager.skipToQueueItem(newIndex);
+              pageManager.play();
+            }
+          }
+        }
+
+        // Navigate to full screen player
         await Navigator.push(
           context,
           MaterialPageRoute(
