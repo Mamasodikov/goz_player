@@ -28,6 +28,7 @@ class MyAudioHandler extends BaseAudioHandler {
   final _networkInfo = di<NetworkInfo>();
   final _playlist = ConcatenatingAudioSource(children: []);
   bool _isUpdatingQueue = false;
+  int? _lastProcessedAutoAdvanceIndex = null;
 
   MyAudioHandler() {
     _loadEmptyPlaylist();
@@ -37,6 +38,7 @@ class MyAudioHandler extends BaseAudioHandler {
     _listenForCurrentSongIndexChanges();
     _listenForSequenceStateChanges();
     _listenForErrors();
+    _listenForAutoAdvance();
   }
 
   void _listenForErrors() {
@@ -46,6 +48,71 @@ class MyAudioHandler extends BaseAudioHandler {
         debugPrint('Playback error: $e');
       },
     );
+  }
+
+  void _listenForAutoAdvance() {
+    _player.playbackEventStream.listen((event) async {
+      if (_isUpdatingQueue) return;
+
+      final hasInternet = await _networkInfo.isConnected;
+      if (hasInternet) return; // only check when offline
+
+      final currentIndex = _player.currentIndex;
+      if (currentIndex == null) return;
+
+      // Skip if we just processed this index to avoid infinite loops
+      if (_lastProcessedAutoAdvanceIndex == currentIndex) return;
+
+      final queueList = queue.value;
+      if (queueList.isEmpty || currentIndex >= queueList.length) return;
+
+      final currentSong = queueList[currentIndex];
+      final isDownloaded = currentSong.extras?['isDownloaded'] == 'true';
+
+      // if current song is not downloaded and we're offline, skip to next playable song
+      if (!isDownloaded) {
+        debugPrint('Auto-advance: Current song not downloaded while offline, pausing and skipping...');
+        _lastProcessedAutoAdvanceIndex = currentIndex;
+
+        // Pause immediately to stop playback
+        if (_player.playing) {
+          await _player.pause();
+        }
+
+        int nextPlayableIndex = -1;
+
+        // search forward from current position
+        for (int i = currentIndex + 1; i < queueList.length; i++) {
+          final isDownloadedNext = queueList[i].extras?['isDownloaded'] == 'true';
+          if (isDownloadedNext) {
+            nextPlayableIndex = i;
+            break;
+          }
+        }
+
+        // wrap around if nothing found
+        if (nextPlayableIndex == -1) {
+          for (int i = 0; i < currentIndex; i++) {
+            final isDownloadedNext = queueList[i].extras?['isDownloaded'] == 'true';
+            if (isDownloadedNext) {
+              nextPlayableIndex = i;
+              break;
+            }
+          }
+        }
+
+        if (nextPlayableIndex != -1) {
+          debugPrint('Auto-advance: Found playable song at index $nextPlayableIndex');
+          _lastProcessedAutoAdvanceIndex = null; // reset before seeking
+          await Future.delayed(Duration(milliseconds: 100)); // small delay to ensure pause is processed
+          await _player.seek(Duration.zero, index: nextPlayableIndex);
+          await _player.play();
+        } else {
+          // no playable songs found, stop playback
+          debugPrint('Auto-advance: No downloaded songs available, stopping playback');
+        }
+      }
+    });
   }
 
   Future<void> _loadEmptyPlaylist() async {
@@ -125,7 +192,7 @@ class MyAudioHandler extends BaseAudioHandler {
   }
 
   void _listenForCurrentSongIndexChanges() {
-    _player.currentIndexStream.listen((index) {
+    _player.currentIndexStream.listen((index) async {
       if (_isUpdatingQueue) return;
 
       final playlist = queue.value;
@@ -137,6 +204,16 @@ class MyAudioHandler extends BaseAudioHandler {
       if (_player.shuffleModeEnabled) {
         index = _player.shuffleIndices!.indexOf(index);
       }
+      final hasInternet = await _networkInfo.isConnected;
+      final currentSong = playlist[index];
+      final isDownloaded = currentSong.extras?['isDownloaded'] == 'true';
+
+      if (!hasInternet && !isDownloaded) {
+        // Don't update mediaItem, let auto-advance handle it
+        debugPrint('Song index changed to non-downloaded song while offline, skipping update');
+        return;
+      }
+
       mediaItem.add(playlist[index]);
     });
   }
@@ -359,6 +436,7 @@ class MyAudioHandler extends BaseAudioHandler {
     if (_player.shuffleModeEnabled) {
       index = _player.shuffleIndices![index];
     }
+    _lastProcessedAutoAdvanceIndex = null; // reset to allow auto-advance listener to work
     _player.seek(Duration.zero, index: index);
   }
 
@@ -394,6 +472,7 @@ class MyAudioHandler extends BaseAudioHandler {
       }
 
       if (nextPlayableIndex != -1) {
+        _lastProcessedAutoAdvanceIndex = null; // reset to allow auto-advance listener to work
         await _player.seek(Duration.zero, index: nextPlayableIndex);
       }
       return;
@@ -434,6 +513,7 @@ class MyAudioHandler extends BaseAudioHandler {
       }
 
       if (prevPlayableIndex != -1) {
+        _lastProcessedAutoAdvanceIndex = null; // reset to allow auto-advance listener to work
         await _player.seek(Duration.zero, index: prevPlayableIndex);
       }
       return;
