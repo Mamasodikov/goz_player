@@ -78,6 +78,7 @@ class MyAudioHandler extends BaseAudioHandler {
     }
   }
 
+  //This function is for auto play prevent for playing not downloaded songs
   void _listenForAutoAdvance() {
     _player.playbackEventStream.listen((event) async {
       if (_isUpdatingQueue) return;
@@ -118,7 +119,7 @@ class MyAudioHandler extends BaseAudioHandler {
           }
         }
 
-        // wrap around if nothing found
+        // ======== > Start again if nothing found :)
         if (nextPlayableIndex == -1) {
           for (int i = 0; i < currentIndex; i++) {
             final isDownloadedNext = queueList[i].extras?['isDownloaded'] == 'true';
@@ -136,7 +137,6 @@ class MyAudioHandler extends BaseAudioHandler {
           await _player.seek(Duration.zero, index: nextPlayableIndex);
           await _player.play();
         } else {
-          // no playable songs found, stop playback
           debugPrint('Auto-advance: No downloaded songs available, stopping playback');
         }
       }
@@ -279,7 +279,7 @@ class MyAudioHandler extends BaseAudioHandler {
 
         if (audioUrl.isEmpty) continue;
 
-        // spin up a temp player just to read the duration
+        // temp player just to read the duration
         final tempPlayer = AudioPlayer();
         final audioSource = _createAudioSource(mediaItem);
 
@@ -387,7 +387,7 @@ class MyAudioHandler extends BaseAudioHandler {
             }
           }
 
-          // wrap around if nothing found
+          // ======== > Start again if nothing found :)
           if (nextPlayableIndex == -1) {
             for (int i = 0; i < index; i++) {
               final isDownloaded = newQueue[i].extras?['isDownloaded'] == 'true';

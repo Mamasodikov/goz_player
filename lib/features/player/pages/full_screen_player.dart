@@ -124,18 +124,16 @@ class _FullScreenPlayerState extends State<FullScreenPlayer> {
     final playlist = pageManager.playlistNotifier.value;
     final currentSong = pageManager.currentSongNotifier.value;
 
-    // If the song is already playing or loading, don't do anything
-    // This prevents re-triggering playback when navigating from grid
     if (currentSong.id == widget.song.trackId) {
-      // Only resume if paused
+      //====> only resume if paused
       if (pageManager.playButtonNotifier.value == ButtonState.paused) {
         pageManager.play();
       }
       return;
     }
 
-    // Only proceed if the song is not already in the process of being played
-    // This check prevents duplicate playback initialization
+   // Qo'shiq play bo'lmayotgan bo'lsa davom etish
+   // Bu reset bo'p ketishini oldini oladi
     final songIndex = playlist.indexWhere((item) => item.id == widget.song.trackId);
 
     if (songIndex != -1) {
