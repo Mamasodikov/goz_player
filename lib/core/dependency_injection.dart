@@ -1,4 +1,13 @@
 import 'package:audio_service/audio_service.dart';
+import 'package:goz_player/features/home/data/datasources/music_local_datasource.dart';
+import 'package:goz_player/features/home/data/datasources/home_remote_datasource.dart';
+import 'package:goz_player/features/home/data/repositories/home_repository_impl.dart';
+import 'package:goz_player/features/home/domain/repositories/home_repository.dart';
+import 'package:goz_player/features/home/domain/usecases/u_music_detailed.dart';
+import 'package:goz_player/features/home/presentation/bloc/music_detailed/music_detailed_bloc.dart';
+import 'package:goz_player/features/home/presentation/bloc/music_home/music_home_bloc.dart';
+import 'package:goz_player/features/player/audio_handler.dart';
+import 'package:goz_player/features/player/page_manager.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
@@ -23,8 +32,20 @@ Future<void> init() async {
   di.registerFactory(() => prefs);
 
   ///Database
+  di.registerSingletonAsync<MusicLocalDatasource>(() async {
+    final musicDb = MusicLocalDatasource();
+    await musicDb.isar;
+    return musicDb;
+  });
 
   ///Audio services
+  // services
+  final audioHandler = await initAudioService();
+  di.registerSingleton<AudioHandler>(audioHandler);
+  // page state
+  final pageManager = PageManager();
+  await pageManager.init();
+  di.registerSingleton<PageManager>(pageManager);
 
   ///Versioning
   // PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -45,13 +66,37 @@ Future<void> init() async {
 
   ///BLOCK
 
+  di.registerFactory(
+    () => MusicHomeBloc(
+      dio: di(),
+      networkInfo: di(),
+    ),
+  );
+
+  di.registerFactory(
+    () => MusicDetailedBloc(
+      dio: di(),
+      networkInfo: di(),
+      pageManager: di(),
+      uMusicDetailedDownload: di(),
+    ),
+  );
+
   ///Repositories
 
+  di.registerLazySingleton<HomeRepository>(() => HomeRepositoryImpl(
+      homeRemoteDatasourceImpl: di(),
+      networkInfo: di()));
+
   ///Use Cases
+
+  di.registerLazySingleton(() => UMusicDetailedDownload(homeRepository: di()));
 
   ///Data sources
 
   //Home remote datasource
+  di.registerLazySingleton(() => HomeRemoteDatasourceImpl(
+      client: di(), database: di(), pageManager: di()));
 
   debugPrint('=========== Dependency injection initializing finished ===========');
 }

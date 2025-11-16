@@ -1,0 +1,58 @@
+[
+  {
+    "id": "t001",
+    "title": "Let Me Down Slowly",
+    "artist": "Alec Benjamin",
+    "duration": 169,
+    "audioUrl": "assets/audio/Alec_Benjamin_-_Let_Me_Down_Slowly.mp3",
+    "coverUrl": "assets/covers/let_me_down_slowly.png"
+  },
+  {
+    "id": "t002",
+    "title": "Ocean Eyes",
+    "artist": "Billie Eilish",
+    "duration": 200,
+    "audioUrl": "assets/audio/Billie_Eilish_-_Ocean_Eyes.mp3",
+    "coverUrl": "assets/covers/ocean_eyes.png"
+  },
+  {
+    "id": "t003",
+    "title": "Rano",
+    "artist": "Botir Zokirov",
+    "duration": 255,
+    "audioUrl": "assets/audio/Botir_Zokirov_-_Rano.mp3",
+    "coverUrl": "assets/covers/botir_zokirov.png"
+  },
+  {
+    "id": "t004",
+    "title": "Instant Crush",
+    "artist": "Daft Punk",
+    "duration": 337,
+    "audioUrl": "assets/audio/Daft_Punk_-_Instant_Crush.mp3",
+    "coverUrl": "assets/covers/instant_crush.png"
+  },
+  {
+    "id": "t005",
+    "title": "Derniere Danse",
+    "artist": "Indila",
+    "duration": 213,
+    "audioUrl": "assets/audio/Indila_-_Derniere_Danse.mp3",
+    "coverUrl": "assets/covers/indila.png"
+  },
+  {
+    "id": "t006",
+    "title": "Adagio",
+    "artist": "Lara Fabian",
+    "duration": 267,
+    "audioUrl": "assets/audio/Lara_Fabian_-_Adagio.mp3",
+    "coverUrl": "assets/covers/adagio.png"
+  },
+  {
+    "id": "t007",
+    "title": "Zombie",
+    "artist": "The Cranberries",
+    "duration": 306,
+    "audioUrl": "assets/audio/The_Cranberries_-_Zombie.mp3",
+    "coverUrl": "assets/covers/zombie.png"
+  }
+]
