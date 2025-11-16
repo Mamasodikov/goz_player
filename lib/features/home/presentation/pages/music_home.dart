@@ -10,7 +10,7 @@ import 'package:goz_player/features/home/presentation/pages/playlist_page.dart';
 import 'package:goz_player/features/home/presentation/widgets/custom_cards_row.dart';
 import 'package:goz_player/features/home/presentation/widgets/music_home_header.dart';
 import 'package:goz_player/features/home/presentation/widgets/songs_grid.dart';
-// import 'package:goz_player/features/player/widgets/draggable_bottom_sheet.dart';
+import 'package:goz_player/features/player/widgets/draggable_bottom_sheet.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -94,7 +94,7 @@ class _MusicHomePageState extends State<MusicHomePage> {
                 }
               },
             ),
-            // DraggableBottomSheet(),
+            DraggableBottomSheet(),
           ],
         ),
       ),

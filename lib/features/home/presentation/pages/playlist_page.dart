@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:goz_player/core/dependency_injection.dart';
 import 'package:goz_player/core/network/network_info.dart';
 import 'package:goz_player/core/utils/constants.dart';
+import 'package:goz_player/features/player/widgets/playlist_widget.dart';
 import 'package:flutter/material.dart';
 
 class PlaylistPage extends StatefulWidget {
@@ -70,7 +71,7 @@ class _PlaylistPageState extends State<PlaylistPage> {
                       )),
                   Column(
                     children: [
-//
+                      Playlist(hasInternet: hasInternet),
                     ],
                   ),
                 ],

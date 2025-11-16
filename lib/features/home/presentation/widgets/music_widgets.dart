@@ -6,6 +6,7 @@ import 'package:goz_player/core/utils/constants.dart';
 import 'package:goz_player/core/widgets/custom_toast.dart';
 import 'package:goz_player/features/home/data/models/music_model.dart';
 import 'package:goz_player/features/home/presentation/bloc/music_home/music_home_bloc.dart';
+import 'package:goz_player/features/player/pages/full_screen_player.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:zoom_tap_animation/zoom_tap_animation.dart';
@@ -33,7 +34,7 @@ class MusicGridCard extends StatelessWidget {
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => Container(),
+            builder: (context) => FullScreenPlayer(song: song),
           ),
         );
 

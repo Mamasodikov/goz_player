@@ -89,11 +89,11 @@ flutter_launcher_icons:
 #  dart run flutter_native_splash:create
 flutter_native_splash:
   image: assets/icons/icon.png
-  color: "#3A40D3"
+  color: "#ED7302"
   android: true
   ios: true
   android_12:
-    color: "#3A40D3"
+    color: "#ED7302"
     # The image parameter sets the splash screen icon image.  If this parameter is not specified,
     # the app's launcher icon will be used instead.
     # Please note that the splash screen will be clipped to a circle on the center of the screen.
@@ -104,7 +104,7 @@ flutter_native_splash:
     image: assets/icons/iconAPI31.png
 
     #App icon background color.
-    icon_background_color: "#3A40D3"
+    icon_background_color: "#ED7302"
 
     # The branding property allows you to specify an image used as branding in the splash screen.
     #branding: assets/dart.png
