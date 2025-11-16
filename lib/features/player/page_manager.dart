@@ -135,12 +135,18 @@ class PageManager {
       final oldState = progressNotifier.value;
       final newDuration = mediaItem?.duration ?? Duration.zero;
 
+      // Only update if we have a valid duration or if we're resetting to zero
       if (newDuration.inMilliseconds > 0 || oldState.total.inMilliseconds == 0) {
-        progressNotifier.value = ProgressBarState(
-          current: Duration.zero,
-          buffered: Duration.zero,
-          total: newDuration,
-        );
+        // Only reset current position if the total duration actually changed
+        // This prevents resetting position during seeks or metadata updates
+        if (oldState.total != newDuration) {
+          progressNotifier.value = ProgressBarState(
+            current: Duration.zero,
+            buffered: Duration.zero,
+            total: newDuration,
+          );
+        }
+        // If duration is the same, don't update at all to preserve current position
       }
     });
   }

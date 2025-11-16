@@ -49,6 +49,7 @@ class _FullScreenPlayerState extends State<FullScreenPlayer> {
   void _listenToCurrentSong() {
     pageManager.currentSongNotifier.addListener(_updateSongStatus);
     pageManager.playlistNotifier.addListener(_checkPlaylistEmpty);
+    pageManager.playlistNotifier.addListener(_updateSongStatus);
     _updateSongStatus();
   }
 
@@ -76,6 +77,7 @@ class _FullScreenPlayerState extends State<FullScreenPlayer> {
     _connectivitySubscription?.cancel();
     pageManager.currentSongNotifier.removeListener(_updateSongStatus);
     pageManager.playlistNotifier.removeListener(_checkPlaylistEmpty);
+    pageManager.playlistNotifier.removeListener(_updateSongStatus);
     super.dispose();
   }
 
@@ -102,6 +104,7 @@ class _FullScreenPlayerState extends State<FullScreenPlayer> {
       setState(() {
         isInPlaylist = playlist.any((b) => b.trackId == currentSongId);
         isDownloaded = music?.isDownloaded ?? false;
+        isDownloading = false;
       });
     }
   }
@@ -269,27 +272,30 @@ class _FullScreenPlayerState extends State<FullScreenPlayer> {
 
       if (success) {
         await _updateSongStatus();
-        setState(() {
-          isDownloading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${currentSong.title} downloaded successfully!')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${currentSong.title} downloaded successfully!')),
+          );
+        }
       } else {
-        setState(() {
-          isDownloading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to download ${currentSong.title}')),
-        );
+        if (mounted) {
+          setState(() {
+            isDownloading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to download ${currentSong.title}')),
+          );
+        }
       }
     } catch (e) {
-      setState(() {
-        isDownloading = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error downloading: $e')),
-      );
+      if (mounted) {
+        setState(() {
+          isDownloading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error downloading: $e')),
+        );
+      }
     }
   }
 

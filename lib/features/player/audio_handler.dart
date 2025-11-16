@@ -399,7 +399,14 @@ class MyAudioHandler extends BaseAudioHandler {
   Future<void> pause() => _player.pause();
 
   @override
-  Future<void> seek(Duration position) => _player.seek(position);
+  Future<void> seek(Duration position) async {
+    await _player.seek(position);
+    // Immediately update playback state with new position
+    // This is important when paused, as position stream may not emit immediately
+    playbackState.add(playbackState.value.copyWith(
+      updatePosition: position,
+    ));
+  }
 
   @override
   Future<void> skipToQueueItem(int index) async {
