@@ -193,25 +193,25 @@ class _FullScreenPlayerState extends State<FullScreenPlayer> {
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
                   child: Column(
                     children: [
-                      SizedBox(height: 40),
+                      SizedBox(height: 20),
                       ValueListenableBuilder<MediaItem>(
                         valueListenable: pageManager.currentSongNotifier,
                         builder: (context, currentSong, _) {
                           return PlayerCover(currentSong: currentSong);
                         },
                       ),
-                      SizedBox(height: 40),
+                      SizedBox(height: 20),
                       ValueListenableBuilder<MediaItem>(
                         valueListenable: pageManager.currentSongNotifier,
                         builder: (context, currentSong, _) {
                           return PlayerMetadata(currentSong: currentSong);
                         },
                       ),
-                      SizedBox(height: 40),
+                      SizedBox(height: 30),
                       PlayerProgress(pageManager: pageManager),
-                      SizedBox(height: 30),
+                      SizedBox(height: 20),
                       PlayerControls(pageManager: pageManager),
-                      SizedBox(height: 30),
+                      SizedBox(height: 20),
                       PlayerActions(
                         isDownloaded: isDownloaded,
                         isDownloading: isDownloading,

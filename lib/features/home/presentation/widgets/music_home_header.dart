@@ -17,7 +17,8 @@ class MusicHomeHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
-      expandedHeight: 220,
+      expandedHeight: 230,
+      collapsedHeight: 80,
       floating: false,
       pinned: true,
       backgroundColor: cFirstColor,
@@ -37,8 +38,9 @@ class MusicHomeHeader extends StatelessWidget {
             ),
           ),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
+              SizedBox(height: 35),
               Image.asset(Assets.assetsGooseIcon, height: 100),
             ],
           ),
