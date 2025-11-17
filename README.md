@@ -12,7 +12,7 @@ Welcome to **G'oz Player** — a Flutter project developed for testing task of t
 ## Features
 
 - **Beautiful UI:** A modern and intuitive user interface that ensures a pleasant experience for music enthusiasts.
-- **Offline Access:** Download your favorite audiobooks and listen to them even when you're offline.
+- **Offline Access:** Download your favorite songs and listen to them even when you're offline.
 - **Customizable Audio Player:** Control playback actions, create playlist, and enjoy a rich listening experience.
 - **Progress Tracking:** Keep track of your listening progress across all your songs. (not implemented yet, saves only last audio and position)
 
